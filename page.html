@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codenames</title>
+</head>
+<body>
+    <div id="root">
+        <div class="form">
+            <label>Rouges</label>
+            <input type="number" v-model="inpRed">
+            <label>Bleus</label>
+            <input type="number" v-model="inpBlue">
+            <label>Noirs</label>
+            <input type="number" v-model="inpBlack">
+            <label>Largeur</label>
+            <input type="number" v-model="inpWidth">
+            <label>Hauteur</label>
+            <input type="number" v-model="inpHeight">
+            <button :disabled="!valid" @click="generate">Generer</button>
+        </div>
+
+        <div class="grid">
+            <div v-for="(line, l) in cards" :key="l" class="line">
+                <div v-for="(col, c) in line" :key="c" class="square" :class="getClass(l, c)">
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        #root {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .form {
+            display: flex;
+            flex-direction: column;
+            min-width: 500px;
+            margin: auto;
+        }
+        .form > * {
+            margin-top: 5px;
+        }
+        .square {
+            border: solid 2px;
+            height: 100px;
+            width: 100px;
+        }
+        .grid {
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+        }
+        .line {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+        .blue {
+            background-color: rgb(37, 136, 235);
+        }
+        .blue::before {
+            content: '\25CB';
+        }
+        .red {
+            background-color: rgb(232, 51, 84);
+        }
+        .red::before {
+            content: '\25c7';
+        }
+        .black {
+            background-color: #111111;
+        }
+        .black::before {
+            content: 'X';
+        }
+        .square {
+            display: flex;
+            text-align: center;
+            justify-content: center;
+            font-size: 80px;
+            color: white;
+            border: 2px solid black;
+            font-family: sans-serif;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <!--script src="https://cdn.jsdelivr.net/npm/vue@2"></script-->
+    <script>
+        function getRandomInt(max) {
+            return Math.floor(Math.random() * max);
+        }
+        const WHITE = 0;
+        const BLACK = 1;
+        const RED = 2;
+        const BLUE = 3;
+        const CLASS = [
+            ['white'],
+            ['black'],
+            ['red'],
+            ['blue'],
+        ];
+        function getIndex(index, array) {
+            console.log({index, array});
+            for (let line = 0; line < array.length; ++line) {
+                for (let col = 0; col < array[0].length; ++col) {
+                    if (array[line][col] != 0) {
+                        continue;
+                    }
+                    index -= 1;
+                    if (index <= 0) {
+                        return [line, col]
+                    }
+                }
+            }
+        }
+        var app = new Vue({
+            el: '#root',
+            data: {
+                cards: undefined,
+                inpRed: 8,
+                inpBlue: 7,
+                inpBlack: 1,
+                inpWidth: 5,
+                inpHeight: 4,
+            },
+            created() {
+                this.generate();
+            },
+            computed: {
+                consistent() {
+                    return this.black + this.red + this.blue <= this.width * this.height;
+                },
+                valid() {
+                    const values = [this.red, this.blue, this.black, this.width, this.height];
+                    return values.every((n) => isFinite(n)) && this.consistent;
+                },
+                red() {
+                    return Number(this.inpRed);
+                },
+                blue() {
+                    return Number(this.inpBlue);
+                },
+                black() {
+                    return Number(this.inpBlack)
+                },
+                width() {
+                    return Number(this.inpWidth)
+                },
+                height() {
+                    return Number(this.inpHeight)
+                },
+            },
+            methods: {
+                generate() {
+                    const cards = Array.apply(null, Array(this.height)).map(() => {
+                        return Array.apply(null, Array(this.width)).map(() => WHITE)
+                    });
+                    const remainig = {
+                        [BLACK]: this.black,
+                        [RED]: this.red,
+                        [BLUE]: this.blue,
+                    };
+                    let total = this.height * this.width;
+                    for (const [key, val] of Object.entries(remainig)) {
+                        for (let i = 0; i < val; ++i) {
+                            let index = getRandomInt(total);
+                            total -= 1;
+                            const [line, column] = getIndex(index, cards);
+                            cards[line][column] = Number(key);
+                        }
+                    }
+                    this.cards = cards;
+                    console.log(this.cards)
+                },
+                getClass(l, c) {
+                    return CLASS[this.cards[l][c]];
+                }
+            }
+        });
+    </script>
+</body>
+</html>
